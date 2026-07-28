@@ -39,13 +39,13 @@ pip install fastapi uvicorn sqlalchemy psycopg2-binary python-dotenv passlib[bcr
 
 ## Database configuration
 
-`app/database.py` uses:
+`app/database.py` uses a PostgreSQL connection string like:
 
 ```python
-SQLALCHEMY_DATABASE_URL = 'postgresql://postgres:abc123**@localhost/posts'
+SQLALCHEMY_DATABASE_URL = 'postgresql://<user>:<password>@<host>/<db_name>'
 ```
 
-Update this connection string to match your local PostgreSQL credentials and database.
+Load this value from configuration (for example an environment variable) and avoid committing real credentials.
 
 Create a matching PostgreSQL database and table models through migration/DDL as your setup requires.
 
