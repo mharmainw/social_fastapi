@@ -1,6 +1,6 @@
 from jose import JWTError,jwt
 from datetime import datetime, timedelta, timezone
-from . import database,schemas,models,utils
+from . import database,schemas,models
 from fastapi import Depends,status,HTTPException
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session
@@ -11,7 +11,7 @@ SECRET_KEY = "1ij312inen1nd1nf"
 
 ALGORITHM = "HS256"
 
-ACCESS_TOKEN_EXPIRE_MINUTES = 30
+ACCESS_TOKEN_EXPIRE_MINUTES = 30                            
 
 def create_access_token(data:dict):
     to_encode = data.copy()

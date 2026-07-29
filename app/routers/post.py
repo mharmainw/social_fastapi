@@ -1,16 +1,10 @@
-from fastapi import FastAPI, HTTPException, status, Response, Depends, APIRouter
-from pydantic import BaseModel
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
+from fastapi import HTTPException, status, Response, Depends, APIRouter
 from .. import models 
-from ..schemas import PostCreate,Post,UserCreate,UserOut
-from ..database import engine, get_db
-from ..swagger import get_dark_swagger_ui_html
+from ..schemas import PostCreate,Post
+from ..database import get_db
 from sqlalchemy.orm import Session
-from typing import List
-from ..utils import hash
 from .. import oauth2
+from typing import Optional, List
 
 router = APIRouter(
     prefix = '/posts',
@@ -18,10 +12,10 @@ router = APIRouter(
 )
 
 @router.get('/',response_model=List[Post])
-async def get_posts(db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user)):
+async def get_posts(db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user), limit : int = 10, skip : int = 0, search: Optional[str] = ""):
     # cursor.execute(""" Select * from posts""")
     # posts = cursor.fetchall()
-    posts = db.query(models.Post).all()
+    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
     return posts
 
 
@@ -48,6 +42,8 @@ async def get_post(id : int, db:Session = Depends(get_db), curr_user : int = Dep
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id {id} was not found",
         )
+
+   
     
     return by_id 
 

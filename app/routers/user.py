@@ -1,14 +1,8 @@
-from fastapi import FastAPI, HTTPException, status, Response, Depends, APIRouter
-from pydantic import BaseModel
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
+from fastapi import HTTPException, status, Depends, APIRouter
 from .. import models 
-from ..schemas import PostCreate,Post,UserCreate,UserOut
-from ..database import engine, get_db
-from ..swagger import get_dark_swagger_ui_html
+from ..schemas import UserCreate,UserOut
+from ..database import get_db
 from sqlalchemy.orm import Session
-from typing import List
 from ..utils import hash
 
 

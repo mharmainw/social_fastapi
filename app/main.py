@@ -1,16 +1,12 @@
-from fastapi import FastAPI, HTTPException, status, Response, Depends
-from pydantic import BaseModel
+from fastapi import FastAPI
 import psycopg2
 from psycopg2.extras import RealDictCursor
 import time
 from . import models 
-from .schemas import PostCreate,Post,UserCreate,UserOut
-from .database import engine, get_db
+from .database import engine
 from .swagger import get_dark_swagger_ui_html
-from sqlalchemy.orm import Session
-from typing import List
-from .utils import hash
 from .routers import user,post,auth
+from .config import settings
 
 
 models.Base.metadata.create_all(bind=engine)
@@ -30,7 +26,6 @@ async def custom_swagger_ui_html():
     )
 
 
-
 while(True):
     try:
         conn = psycopg2.connect(host = 'localhost',database = 'posts',user = 'postgres',password = 'abc123**',cursor_factory= RealDictCursor)
@@ -41,6 +36,10 @@ while(True):
         print("DB connection failed")
         print("Error: ", error)
         time.sleep(2)
+
+
+
+
 
     
 

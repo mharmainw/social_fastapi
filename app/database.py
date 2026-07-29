@@ -19,3 +19,17 @@ def get_db():
         yield db
     finally:
         db.close()
+
+
+#run raw sql using postgres lib 
+
+# while(True):
+#     try:
+#         conn = psycopg2.connect(host = 'localhost',database = 'posts',user = 'postgres',password = 'abc123**',cursor_factory= RealDictCursor)
+#         cursor = conn.cursor()
+#         print("DB Connected")
+#         break
+#     except Exception as error: 
+#         print("DB connection failed")
+#         print("Error: ", error)
+#         time.sleep(2)
