@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from . import database,schemas,models,utils
 from fastapi import Depends,status,HTTPException
 from fastapi.security import OAuth2PasswordBearer
+from sqlalchemy.orm import Session
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl='login')
 
