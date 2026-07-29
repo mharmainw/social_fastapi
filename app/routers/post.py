@@ -18,7 +18,7 @@ router = APIRouter(
 )
 
 @router.get('/',response_model=List[Post])
-async def get_posts(db:Session = Depends(get_db)):
+async def get_posts(db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user)):
     # cursor.execute(""" Select * from posts""")
     # posts = cursor.fetchall()
     posts = db.query(models.Post).all()
@@ -27,7 +27,7 @@ async def get_posts(db:Session = Depends(get_db)):
 
 
 @router.get('/{id}',response_model=Post)
-async def get_post(id : int, db:Session = Depends(get_db)):
+async def get_post(id : int, db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user )):
     
 
     # how to do it without ORM
@@ -53,13 +53,13 @@ async def get_post(id : int, db:Session = Depends(get_db)):
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=Post)
-async def create_posts(post: PostCreate,db:Session = Depends(get_db),user_id : int = Depends(oauth2.get_current_user)):
+async def create_posts(post: PostCreate,db:Session = Depends(get_db),curr_user : int = Depends(oauth2.get_current_user)):
     # cursor.execute("""INSERT into posts(title,content,published) VALUES (%s,%s,%s) RETURNING * """, (post.title,post.content,post.published))
     # new_post = cursor.fetchone()
     # conn.commit()
-    print(user_id)
+    
     post_dict = post.model_dump()
-    new_post = models.Post(**post_dict)
+    new_post = models.Post(owner_id = curr_user.id ,**post_dict)
     db.add(new_post)
     db.commit()
     db.refresh(new_post)
@@ -67,7 +67,7 @@ async def create_posts(post: PostCreate,db:Session = Depends(get_db),user_id : i
 
 
 @router.delete('/{id}')
-async def delete_post(id : int, db:Session = Depends(get_db)):
+async def delete_post(id : int, db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user)):
 
 
     # cursor.execute('''DELETE FROM posts WHERE id = %s RETURNING *''', (id,))
@@ -75,11 +75,14 @@ async def delete_post(id : int, db:Session = Depends(get_db)):
 
     deleted_post = db.query(models.Post).filter(models.Post.id == id)
 
-    if deleted_post.first() == None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail=f'post with id {id} was not found',
-        )
+    deleted_post_query = deleted_post.first()
+
+    if deleted_post_query == None:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'post with id: {id} does not exist')
+
+    if deleted_post_query.id != curr_user.id :
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail = f'Not Authorized to perform requested action')
+    
 
     deleted_post.delete(synchronize_session = False)
     db.commit()
@@ -89,7 +92,7 @@ async def delete_post(id : int, db:Session = Depends(get_db)):
 
 
 @router.put('/{id}',response_model=Post)
-async def update_post(id:int, updated_post:PostCreate,db:Session = Depends(get_db)):
+async def update_post(id:int, updated_post:PostCreate,db:Session = Depends(get_db), curr_user   : int = Depends(oauth2.get_current_user)):
     # cursor.execute('''UPDATE posts SET title = %s, content = %s, published = %s WHERE id = %s RETURNING *''', (post.title, post.content, post.published, id))
     # updated_post = cursor.fetchone()
     # conn.commit()
@@ -101,6 +104,10 @@ async def update_post(id:int, updated_post:PostCreate,db:Session = Depends(get_d
     if post == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,
                             detail = f'post with id: {id} was not found')
+
+    if post.owner_id != curr_user.id:
+                raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail = f'Not Authorized to perform requested action')
+
 
     post_query.update(updated_post.model_dump(),synchronize_session = False)
 

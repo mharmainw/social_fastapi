@@ -18,6 +18,7 @@ class Post(PostBase):
 
     id : int
     created_at: datetime
+    owner_id : int
 
 class UserCreate(BaseModel):
     email : EmailStr

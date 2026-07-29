@@ -7,6 +7,7 @@ from ..utils import verify
 from ..oauth2 import create_access_token
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
 from ..utils import hash
+from .. import schemas
 
 
 
@@ -14,7 +15,7 @@ router = APIRouter(
     tags = ['Authentication'] 
 )
 
-@router.post('/login')
+@router.post('/login',response_model = schemas.Token)
 async def login(user_credentials:OAuth2PasswordRequestForm = Depends(), db :Session = Depends(get_db)):
 
     user = db.query(User).filter(User.email == user_credentials.username).first()
