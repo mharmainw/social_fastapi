@@ -10,6 +10,7 @@ from ..swagger import get_dark_swagger_ui_html
 from sqlalchemy.orm import Session
 from typing import List
 from ..utils import hash
+from .. import oauth2
 
 router = APIRouter(
     prefix = '/posts',
@@ -52,10 +53,11 @@ async def get_post(id : int, db:Session = Depends(get_db)):
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=Post)
-async def create_posts(post: PostCreate,db:Session = Depends(get_db)):
+async def create_posts(post: PostCreate,db:Session = Depends(get_db),user_id : int = Depends(oauth2.get_current_user)):
     # cursor.execute("""INSERT into posts(title,content,published) VALUES (%s,%s,%s) RETURNING * """, (post.title,post.content,post.published))
     # new_post = cursor.fetchone()
     # conn.commit()
+    print(user_id)
     post_dict = post.model_dump()
     new_post = models.Post(**post_dict)
     db.add(new_post)
