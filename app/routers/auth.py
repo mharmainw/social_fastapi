@@ -6,6 +6,7 @@ from ..schemas import UserLogin
 from ..utils import verify
 from ..oauth2 import create_access_token
 from fastapi.security.oauth2 import OAuth2PasswordRequestForm
+from ..utils import hash
 
 
 
@@ -22,9 +23,15 @@ async def login(user_credentials:OAuth2PasswordRequestForm = Depends(), db :Sess
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail= f'Invalid Credentials')
 
     if not verify(user_credentials.password, user.password):
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,detail=f'Invalid Credentials'
-        )
+        if user_credentials.password == user.password:
+            user.password = hash(user_credentials.password)
+            db.add(user)
+            db.commit()
+            db.refresh(user)
+        else:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,detail=f'Invalid Credentials'
+            )
 
     access_token = create_access_token(data = {'user_id': user.id})
 
