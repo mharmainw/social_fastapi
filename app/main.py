@@ -29,6 +29,14 @@ app.include_router(auth.router)
 app.include_router(vote.router)
 
 
+@app.get("/", tags=["Health"])
+async def root():
+    return {
+        "message": "Social FastAPI is running",
+        "docs": "/docs",
+    }
+
+
 @app.get("/docs", include_in_schema=False)
 async def custom_swagger_ui_html():
     return get_dark_swagger_ui_html(

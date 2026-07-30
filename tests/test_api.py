@@ -129,7 +129,12 @@ def create_post(headers, title="Test post"):
 def test_docs_and_openapi_are_available():
     assert client.get("/docs").status_code == 200
     assert client.get("/openapi.json").status_code == 200
-    assert client.get("/").status_code == 404
+    response = client.get("/")
+    assert response.status_code == 200
+    assert response.json() == {
+        "message": "Social FastAPI is running",
+        "docs": "/docs",
+    }
 
 
 def test_user_creation_and_authentication():
