@@ -85,3 +85,10 @@ jobs:
       - name: Image digest
         if: github.event_name == 'push'
         run: echo "${{ steps.docker_build.outputs.digest }}"
+
+      - name: Deploy to FastAPI Cloud
+        if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+        env:
+          FASTAPI_CLOUD_TOKEN: ${{ secrets.FASTAPI_CLOUD_TOKEN }}
+          FASTAPI_CLOUD_APP_ID: ${{ secrets.FASTAPI_CLOUD_APP_ID }}
+        run: uv run --frozen fastapi deploy
