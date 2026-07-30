@@ -1,26 +1,36 @@
 from fastapi import HTTPException, status, Response, Depends, APIRouter
 from .. import models 
-from ..schemas import PostCreate,Post
+from ..schemas import PostCreate,Post,PostOut
 from ..database import get_db
 from sqlalchemy.orm import Session
 from .. import oauth2
 from typing import Optional, List
+from sqlalchemy import func
 
 router = APIRouter(
     prefix = '/posts',
     tags = ['Posts']
 )
 
-@router.get('/',response_model=List[Post])
+@router.get('/',response_model=List[PostOut])
 async def get_posts(db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user), limit : int = 10, skip : int = 0, search: Optional[str] = ""):
-    # cursor.execute(""" Select * from posts""")
-    # posts = cursor.fetchall()
-    posts = db.query(models.Post).filter(models.Post.title.contains(search)).limit(limit).offset(skip).all()
-    return posts
+    results = (
+        db.query(
+            models.Post,
+            func.count(models.Vote.post_id).label("votes"),
+        )
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .filter(models.Post.title.contains(search))
+        .group_by(models.Post.id)
+        .limit(limit)
+        .offset(skip)
+        .all()
+    )
+    return [{"Post": post, "votes": votes} for post, votes in results]
 
 
 
-@router.get('/{id}',response_model=Post)
+@router.get('/{id}',response_model=PostOut)
 async def get_post(id : int, db:Session = Depends(get_db), curr_user : int = Depends(oauth2.get_current_user )):
     
 
@@ -36,16 +46,17 @@ async def get_post(id : int, db:Session = Depends(get_db), curr_user : int = Dep
     # conn.commit()
     
 
-    by_id = db.query(models.Post).filter(models.Post.id == id).first()
+    by_id = db.query(models.Post,func.count(models.Vote.post_id).label('Votes')).filter(models.Post.id == id).first().join(models.Vote,models.Vote.post_id == models.Post.id,isouter=True ).group_by(models.Post.id)
+    
     if not by_id:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail=f"post with id {id} was not found",
         )
 
-   
     
-    return by_id 
+    
+    return [{"Post": by_id.post, "votes": by_id.votes}]
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=Post)
