@@ -14,6 +14,7 @@ dependencies = [
   "sqlalchemy>=2.0.30,<3.0.0",
   "psycopg2-binary>=2.9.0,<3.0.0",
   "passlib[bcrypt]>=1.7.4,<2.0.0",
+  "bcrypt==4.0.1",
   "python-jose[cryptography]>=3.3.0,<4.0.0",
   "pydantic>=2.7.0,<3.0.0",
   "pydantic-settings>=2.3.0,<3.0.0",
@@ -37,3 +38,6 @@ include-package-data = true
 [tool.setuptools.packages.find]
 where = ["."]
 include = ["app*", "alembic*"]
+
+[tool.fastapi]
+entrypoint = "app.main:app"

@@ -46,7 +46,16 @@ async def get_post(id : int, db:Session = Depends(get_db), curr_user : int = Dep
     # conn.commit()
     
 
-    by_id = db.query(models.Post,func.count(models.Vote.post_id).label('Votes')).filter(models.Post.id == id).first().join(models.Vote,models.Vote.post_id == models.Post.id,isouter=True ).group_by(models.Post.id)
+    by_id = (
+        db.query(
+            models.Post,
+            func.count(models.Vote.post_id).label("votes"),
+        )
+        .join(models.Vote, models.Vote.post_id == models.Post.id, isouter=True)
+        .filter(models.Post.id == id)
+        .group_by(models.Post.id)
+        .first()
+    )
     
     if not by_id:
         raise HTTPException(
@@ -56,7 +65,8 @@ async def get_post(id : int, db:Session = Depends(get_db), curr_user : int = Dep
 
     
     
-    return [{"Post": by_id.post, "votes": by_id.votes}]
+    post, votes = by_id
+    return {"Post": post, "votes": votes}
 
 
 @router.post('/', status_code=status.HTTP_201_CREATED, response_model=Post)
@@ -87,7 +97,7 @@ async def delete_post(id : int, db:Session = Depends(get_db), curr_user : int = 
     if deleted_post_query == None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND,detail = f'post with id: {id} does not exist')
 
-    if deleted_post_query.id != curr_user.id :
+    if deleted_post_query.owner_id != curr_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN,detail = f'Not Authorized to perform requested action')
     
 
@@ -117,6 +127,7 @@ async def update_post(id:int, updated_post:PostCreate,db:Session = Depends(get_d
 
 
     post_query.update(updated_post.model_dump(),synchronize_session = False)
+    db.commit()
 
     return post_query.first()
 

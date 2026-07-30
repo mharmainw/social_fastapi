@@ -1,7 +1,4 @@
 from fastapi import FastAPI
-import psycopg2
-from psycopg2.extras import RealDictCursor
-import time
 from . import models 
 from .database import engine
 from .swagger import get_dark_swagger_ui_html
@@ -38,21 +35,6 @@ async def custom_swagger_ui_html():
         openapi_url=app.openapi_url,
         title=f"{app.title} - Swagger UI",
     )
-
-
-while(True):
-    try:
-        conn = psycopg2.connect(host = 'localhost',database = 'posts',user = 'postgres',password = 'abc123**',cursor_factory= RealDictCursor)
-        cursor = conn.cursor()
-        print("DB Connected")
-        break
-    except Exception as error: 
-        print("DB connection failed")
-        print("Error: ", error)
-        time.sleep(2)
-
-
-
 
 
     
