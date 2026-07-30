@@ -1,29 +1,50 @@
 from datetime import datetime, timezone
+import os
+import re
 
 import pytest
 from fastapi.testclient import TestClient
-from sqlalchemy import create_engine, event
+from sqlalchemy import create_engine, event, text
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
 from app import database
 
 
-test_engine = create_engine(
-    "sqlite://",
-    connect_args={"check_same_thread": False},
-    poolclass=StaticPool,
-)
+test_database_url = os.getenv("TEST_DATABASE_URL")
+test_database_schema = os.getenv("TEST_DATABASE_SCHEMA", "ci_test")
 
+if test_database_url:
+    if not re.fullmatch(r"[A-Za-z_][A-Za-z0-9_]*", test_database_schema):
+        raise ValueError("TEST_DATABASE_SCHEMA is not a valid PostgreSQL identifier")
 
-@event.listens_for(test_engine, "connect")
-def configure_sqlite(dbapi_connection, connection_record):
-    dbapi_connection.create_function(
-        "now",
-        0,
-        lambda: datetime.now(timezone.utc).isoformat(),
+    schema_engine = create_engine(test_database_url, pool_pre_ping=True)
+    with schema_engine.begin() as connection:
+        connection.execute(
+            text(f'CREATE SCHEMA IF NOT EXISTS "{test_database_schema}"')
+        )
+    schema_engine.dispose()
+
+    test_engine = create_engine(
+        test_database_url,
+        connect_args={"options": f"-c search_path={test_database_schema}"},
+        pool_pre_ping=True,
     )
-    dbapi_connection.execute("PRAGMA foreign_keys=ON")
+else:
+    test_engine = create_engine(
+        "sqlite://",
+        connect_args={"check_same_thread": False},
+        poolclass=StaticPool,
+    )
+
+    @event.listens_for(test_engine, "connect")
+    def configure_sqlite(dbapi_connection, connection_record):
+        dbapi_connection.create_function(
+            "now",
+            0,
+            lambda: datetime.now(timezone.utc).isoformat(),
+        )
+        dbapi_connection.execute("PRAGMA foreign_keys=ON")
 
 
 TestingSessionLocal = sessionmaker(
@@ -49,6 +70,20 @@ def override_get_db():
 
 app.dependency_overrides[database.get_db] = override_get_db
 client = TestClient(app)
+
+
+@pytest.fixture(scope="session", autouse=True)
+def cleanup_postgres_schema():
+    yield
+    if test_database_url:
+        models.Base.metadata.drop_all(bind=test_engine)
+        test_engine.dispose()
+        cleanup_engine = create_engine(test_database_url, pool_pre_ping=True)
+        with cleanup_engine.begin() as connection:
+            connection.execute(
+                text(f'DROP SCHEMA IF EXISTS "{test_database_schema}" CASCADE')
+            )
+        cleanup_engine.dispose()
 
 
 @pytest.fixture(autouse=True)
