@@ -15,14 +15,14 @@ jobs:
   test:
     runs-on: ubuntu-latest
     env:
-      DATABASE_HOSTNAME: localhost
-      DATABASE_PORT: "5432"
-      DATABASE_PASSWORD: test
-      DATABASE_NAME: test
-      DATABASE_USERNAME: test
-      SECRET_KEY: test-secret-key
-      ALGORITHM: HS256
-      ACCESS_TOKEN_EXPIRE_MINUTES: "30"
+      DATABASE_HOSTNAME: ${{ secrets.DATABASE_HOSTNAME }}
+      DATABASE_PORT: ${{ secrets.DATABASE_PORT }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
+      DATABASE_USERNAME: ${{ secrets.DATABASE_USERNAME }}
+      SECRET_KEY: ${{ secrets.SECRET_KEY }}
+      ALGORITHM: ${{ secrets.ALGORITHM }}
+      ACCESS_TOKEN_EXPIRE_MINUTES: ${{ secrets.ACCESS_TOKEN_EXPIRE_MINUTES }}
 
     steps:
       - name: Check out repository
@@ -37,9 +37,7 @@ jobs:
         uses: astral-sh/setup-uv@c771a70e6277c0a99b617c7a806ffedaca235ff9 # v9.0.0
         with:
           enable-cache: true
-
-      - name: Install dependencies
-        run: uv sync --frozen --group dev
+          cache-dependency-glob: "uv.lock"
 
       - name: Run tests
         run: uv run --frozen pytest -q
