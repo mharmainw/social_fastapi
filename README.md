@@ -2,6 +2,9 @@
 
 [![API Tests](https://github.com/mharmainw/social_fastapi/actions/workflows/tests.yml/badge.svg)](https://github.com/mharmainw/social_fastapi/actions/workflows/tests.yml)
 
+[Live API](https://social-fastapi-83442d76.fastapicloud.dev) |
+[Swagger UI](https://social-fastapi-83442d76.fastapicloud.dev/docs)
+
 A production-ready social API built with FastAPI and PostgreSQL. It provides
 user accounts, JWT authentication, post management, voting, database
 migrations, automated tests, Docker images, and continuous deployment to
@@ -293,6 +296,12 @@ uv run alembic current
 Every successful push to `main` deploys the latest source to FastAPI Cloud.
 Deployment is skipped when tests, the Docker build, or Docker Hub publishing
 fails.
+
+Production URL:
+
+```text
+https://social-fastapi-83442d76.fastapicloud.dev
+```
 
 FastAPI Cloud builds the application from source. The Docker Hub image is a
 separate deployment artifact and is not used automatically by FastAPI Cloud.
